@@ -1,0 +1,53 @@
+table {
+   margin-top: 30px;
+}
+
+#reportInfo {
+  color: #AAAAAA;
+}
+#reportInfo #testSuiteName {
+  font-weight: bold;
+  color: #505050;
+}
+
+td, th {
+   padding: 5px 7px;
+}
+
+.rotate {     
+        white-space: nowrap;
+	  transform: rotate(90.0deg) translate(-10px,0px);
+   transform-origin: left top;
+     -moz-transform: rotate(90.0deg) translate(0px,-20px);
+       -o-transform: rotate(90.0deg) translate(0px,-20px);
+  -webkit-transform: rotate(90.0deg) translate(0px,-20px); 
+  -webkit-transform-origin: left top;
+             filter:  progid:DXImageTransform.Microsoft.BasicImage(rotation=0.083);
+         -ms-filter: "progid:DXImageTransform.Microsoft.BasicImage(rotation=0.083)"; 
+}
+
+td.boldtext { font-weight: bold }
+
+tr.fail:nth-child(odd)    { background-color: #f99; }
+tr.fail:nth-child(even)    { background-color: #fbb; }
+
+tr.ok:nth-child(odd)       { background-color: #9f9; }
+tr.ok:nth-child(even)      { background-color: #bfb; }
+
+tr:nth-child(odd) > td.could-not-test:nth-child(odd), tr:nth-child(even) > td.could-not-test:nth-child(even) { background-color: #ff9; }
+tr:nth-child(even) > td.could-not-test:nth-child(odd), tr:nth-child(odd) > td.could-not-test:nth-child(even)  { background-color: #ffb; }
+
+tr:nth-child(odd) , th:nth-child(odd) { background-color: #D0D0D0; }
+tr:nth-child(even), th:nth-child(even){ background-color: #DDD; }
+
+th:first-child { background-color: transparent; }
+
+tr:nth-child(odd) > td.fail:nth-child(odd), tr:nth-child(even) > td.fail:nth-child(even)  { background-color: #f99; }
+tr:nth-child(even) > td.fail:nth-child(odd), tr:nth-child(odd) > td.fail:nth-child(even)  { background-color: #fbb; }
+
+tr:nth-child(odd) > td.ok:nth-child(odd), tr:nth-child(even) > td.ok:nth-child(even) { background-color: #9f9; }
+tr:nth-child(even) > td.ok:nth-child(odd), tr:nth-child(odd) > td.ok:nth-child(even) { background-color: #bfb; }
+
+tr:nth-child(odd) > td.could-not-test:nth-child(odd), tr:nth-child(even) > td.could-not-test:nth-child(even) { background-color: #ff9; }
+tr:nth-child(even) > td.could-not-test:nth-child(odd), tr:nth-child(odd) > td.could-not-test:nth-child(even) { background-color: #ffb; }
+

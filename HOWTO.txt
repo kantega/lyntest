@@ -1,0 +1,9 @@
+FIRST TEST: HOWTO
+=================
+
+1. Go to confluence, test definition
+2. Copy the HTML CONTENT of the test definition tree into a file.
+3. Replace all the <a href=""..>  with the corresponding absolute path.
+3. Import that file by drag-drop to filimport.html
+4. Create a new execution.
+5. Run it!

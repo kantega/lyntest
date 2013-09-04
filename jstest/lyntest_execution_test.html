@@ -1,0 +1,176 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Lyntest execution - test</title>
+
+  <link rel="stylesheet" href="qunit-1.12.0.css">
+  <script src="qunit-1.12.0.js"></script>
+  <script src="../js/underscore-min.js"></script>
+  <script src="../js/lyntest_utils.js"></script>
+  <script src="../js/lyntest_dao.js"></script>
+  <script src="../js/lyntest_execution.js"></script>
+
+  <script>
+
+  var DUMMY_TEST_SUITE_LOCALSTORAGE_ID = 'DUMMY_TEST_SUITE_DELETEMEAFTERTEST';
+
+  var MOCK_QUERY_PARAMETERS = {};
+
+  // Setup
+  LYNTEST.DAO.load();
+  LYNTEST.DAO.isInTestMode = false;
+
+  // Before tests: use own local storage var, do not overwrite the real one!!
+  LYNTEST.DAO.useDummyForTestPurposes = function() {
+  		LYNTEST.DAO.localstorageId = DUMMY_TEST_SUITE_LOCALSTORAGE_ID;
+  		var stringyfiedSuites = localStorage.getItem(LYNTEST.DAO.localstorageId);
+  		if (stringyfiedSuites && !LYNTEST.DAO.isInTestMode) {
+  		   return;
+  		}
+  		LYNTEST.DAO.suites = JSON.parse(stringyfiedSuites) || [];
+  		LYNTEST.DAO.isInTestMode = true;
+  };
+
+  // Before tests: override this one in order to mock it
+  var getParameterByName = function(name) {
+      return MOCK_QUERY_PARAMETERS[name];
+  };
+
+  var setMockQueryParams = function(name, val) {
+  	  MOCK_QUERY_PARAMETERS[name] = val;
+  };
+
+  var validateTestMode = function() {
+  	  ok(LYNTEST.DAO.isInTestMode, 'Test mode validation');
+  	  return LYNTEST.DAO.isInTestMode;
+  };
+
+  // ==============================================================================================================
+
+  module( "LYNTEST_EXECUTION - execution in progress", {
+    setup: function() {
+      LYNTEST.DAO.load();
+      LYNTEST.DAO.useDummyForTestPurposes();
+      setupTestExecutionData();
+      LYNTEST.DAO.load(); // reload
+      LYNTEST.EXECUTION.load( );
+      ok( true, "Lyntest_dao test mode activated." );
+    }, teardown: function() {
+      localStorage.removeItem(DUMMY_TEST_SUITE_LOCALSTORAGE_ID);
+      LYNTEST.DAO.suites = [];
+      ok( true, "Test data removed form local storage." );
+    }
+  });
+
+  test("returns right execution and test from query params", function() {
+       if (!validateTestMode()) return;
+
+       var execution = LYNTEST.EXECUTION.getTestExecution();
+       var currentTest = LYNTEST.EXECUTION.getCurrentTest();
+
+       equal(execution.name, 'In progress');
+       equal(currentTest.test.name, 'Short description of test 5');
+
+  });
+
+  test("returns right execution and test from query params", function() {
+         if (!validateTestMode()) return;
+
+         var execution = LYNTEST.EXECUTION.getTestExecution();
+         var currentTest = LYNTEST.EXECUTION.getCurrentTest();
+
+         equal(execution.name, 'In progress');
+         equal(currentTest.test.name, 'Short description of test 5');
+
+  });
+
+  test("statistics (test execution progress)", function() {
+         if (!validateTestMode()) return;
+
+         var stats = LYNTEST.EXECUTION.getAmountOfOkFailed();
+         equal(stats.ok, 4);
+         equal(stats.failed, 1);
+         equal(stats.couldNotTest, 0);
+         equal(stats.remaining, 15);
+         equal(stats.total, 20);
+
+  });
+
+
+  // =======================================================================
+  // DIVERSE TEST UTIL FUNCTIONS
+  // =======================================================================
+
+  window.alert = function(str) {  /* do nothing, test in silent mode */ };
+
+  var createTestSuite = function(suiteName, listOfTests) {
+  		var result = {};
+  		result.guid = 'TS-' + generateQuickGuid();
+  		result.name = suiteName;
+  		result.tests = listOfTests;
+  		result.executions = [];
+  		result.created = new Date();
+  		return result;
+   };
+
+   var createTest = function(testId, testName, testDefinitionUrl) {
+   		var result = {};
+   		result.guid = 'TEST-' + generateQuickGuid();
+   		result.id = testId;
+   		result.name = testName;
+   		result.url = testDefinitionUrl;
+   		return result;
+	};
+
+   var setupTestExecutionData = function() {
+
+       var idPrefix = 'TEST-';
+       var namePrefix = 'Short description of test ';
+       var urlPrefix = 'http://www.aftenposten.no';
+
+       var testList = [];
+
+       for (var i = 0; i < 20; i++) {
+          testList.push( createTest(idPrefix + i, namePrefix + i, urlPrefix));
+       }
+
+       var testSuite = createTestSuite('TEST SUITE', testList);
+       LYNTEST.DAO.addAndStoreTestSuite(testSuite);
+
+       // Create 3 different executions
+       LYNTEST.DAO.createTestSuiteExecution(testSuite.guid, 'Completed');
+       LYNTEST.DAO.createTestSuiteExecution(testSuite.guid, 'In progress');
+       LYNTEST.DAO.createTestSuiteExecution(testSuite.guid, 'Not started');
+
+       var completedExecution = testSuite.executions[0];
+       var setToFailed = [5, 6, 19];
+       var setToCouldNotTest = [1, 7];
+       for (var i = 0; i < 20; i++) {
+           var status = _.contains(setToFailed, i) ? 'FAIL' : _.contains(setToCouldNotTest, i) ?  'COULDNOTTEST' : 'OK';
+           completedExecution.tests[i].status = status;
+       };
+
+       var executionInProgress = testSuite.executions[1];
+       for (var i = 0; i < 5; i++) {
+           var status = i == 2 ? 'FAIL' : 'OK';
+           executionInProgress.tests[i].status = status;
+       };
+       executionInProgress.currentTestIndex = 5;
+
+       LYNTEST.DAO.saveCurrentStatus();
+
+       setMockQueryParams(LYNTEST.QUERYPARAMS.testSuiteId, testSuite.guid);
+       setMockQueryParams(LYNTEST.QUERYPARAMS.testExecutionId, executionInProgress.guid);
+
+   };
+
+  // After tests
+  </script>
+</head>
+<body>
+
+<div id="qunit"></div>
+
+</body>
+</html>

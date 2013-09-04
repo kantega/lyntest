@@ -1,0 +1,3 @@
+TEST-1: Test that kantega.no is up and running;http://www.kantega.no
+TEST-2: Test that aftenposten is up and running;http://www.ap.no
+TEST-3: Test that dagbladet is up and running;http://www.db.no 

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<head>
+<meta charset=utf-8>
+<title>LYNTEST - Test suite</title>
+<link rel="stylesheet" href="css/bootstrap-old-version.css">
+<link rel="stylesheet" href="css/lyntest_testsuite.css">
+<script src="js/jquery-1.10.2.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/underscore-min.js"></script>
+<script src="js/lyntest_utils.js"></script>
+<script src="js/lyntest_dao.js"></script>
+</head>
+<body>
+<section id="wrapper">
+<div id="container">
+    <header>
+      <h1 id="testSuiteName">Test suite: </h1>
+    </header>
+    <div>
+  		<div class="btn-group">
+		  <button type="button" class="btn btn-info">Generate report</button>
+		  <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown">
+		    <span class="caret"></span>
+		  </button>
+		  <ul class="dropdown-menu" role="menu">
+		    <li><a href="#" onclick="onReportAllExecsClick();return false;">All executions</a></li>
+			<li class="divider"></li>
+			<li><a href="#" onclick="onReportOngoingExecsClick();return false;">Ongoing executions</a></li>
+		    <li><a href="#" onclick="onReportCompletedExecsClick();return false;">Completed executions</a></li>
+		  </ul>
+		</div>
+	</div>
+	<article>
+	   <h2>Ongoing executions</h2>
+	   <div id="ongoingExecutions">
+	   	   Nothing found here.
+	   </div>
+	   <div>
+		   <form id="import-form" class="navbar-form" style="width: 50%">
+			   <input id="name-field" type="text" class="form-control"  placeholder="Enter a name for your new execution" style="width: 50%">
+			   <button type="button" class="btn btn-info" onclick="onSaveButtonClick();return false;">Create new execution</button>
+		   </form>
+	   <div>
+	</article>
+	<article>
+		<h2>History: completed executions</h2>
+		<div id="completedExecutions">
+		   Nothing found here.
+		</div>
+	</article>
+</div>
+
+<!-- MODAL WINDOW - CONFIRM DELETE ------>
+
+<div id="modal-from-dom" class="modal hide fade">
+    <div class="modal-header">
+      <a href="#" class="close">&times;</a>
+      <h3>Delete test execution</h3>
+    </div>
+    <div class="modal-body">
+      <p>Confirm-text to user</p>
+    </div>
+    <input type="hidden" id="deleteExecIndexId" value="-1"></input>
+    <div class="modal-footer">
+      <a href="#" onclick="onConfirmDeleteBtnClick();return false;" class="btn danger">Yes</a>
+      <a href="#" onclick="javascript:$('#modal-from-dom').modal('hide')" class="btn secondary">No</a>
+    </div>
+</div>
+
+<!-- END - modal window ----------------->
+
+<script defer>
+
+	var testSuiteGuid = getParameterByName(LYNTEST.QUERYPARAMS.testSuiteId);
+	var testSuite;
+
+	var onReportAllExecsClick = function() {
+	    var queryParams = LYNTEST.QUERYPARAMS.testSuiteId + '=' + testSuiteGuid;
+	    window.open('reportall.html?' + queryParams, '_blank');
+	};
+
+	var onReportCompletedExecsClick = function() {
+		var queryParams = LYNTEST.QUERYPARAMS.testSuiteId + '=' + testSuiteGuid;
+		window.open('reportall.html?' + queryParams + '&completed=true', '_blank');
+	};
+
+	var onReportOngoingExecsClick = function() {
+		var queryParams = LYNTEST.QUERYPARAMS.testSuiteId + '=' + testSuiteGuid;
+		window.open('reportall.html?' + queryParams + '&completed=false', '_blank');
+	};
+
+	var onSaveButtonClick = function() {
+	    LYNTEST.DAO.createTestSuiteExecution(testSuiteGuid, $('#name-field').val());
+		displayExecutions();
+    };
+
+    var onDeleteExecutionBtnClick = function(executionGuid) {
+        var executionToDelete = _.findWhere(testSuite.executions, {guid: executionGuid});
+        var confirmMsg = '<p>Confirm delete execution: <b>' + executionToDelete.name + '</b>?</p><p><b>NB!</b> This cannot be undone!</p>';
+        $('#modal-from-dom .modal-body').html(confirmMsg);
+        $('#modal-from-dom #deleteExecIndexId').val(executionGuid);
+    	$('#modal-from-dom').modal('show');
+    };
+
+    var onConfirmDeleteBtnClick = function() {
+        var deleteExecutionWithGuid = $('#modal-from-dom #deleteExecIndexId').val();
+    	LYNTEST.DAO.deleteTestSuiteExecution(testSuiteGuid, deleteExecutionWithGuid);
+    	$('#modal-from-dom').modal('hide');
+		displayExecutions();
+    };
+
+    var tableRowForExecution = function(currentExecution) {
+		var tableRow = $('<tr></tr>');
+
+		var queryParams = LYNTEST.QUERYPARAMS.testSuiteId + '=' + testSuiteGuid + '&' + LYNTEST.QUERYPARAMS.testExecutionId + '=' + currentExecution.guid;
+		var linkHtml = '<a href="execution.html?' + queryParams + '" target="_blank">' + currentExecution.name + '</a>';
+        var linkReportHtml = '<a href="report.html?' + queryParams + '" target="_blank">Show test report</a>';
+		var dateCreated = formattedDate(currentExecution.created);
+		var dateUpdated = formattedDate(currentExecution.updated);
+
+		$(tableRow).append('<td class="boldtext">' + linkHtml + '</td>');
+		$(tableRow).append('<td>' + currentExecution.tests.length + ' tests </td>');
+		$(tableRow).append('<td class="boldtext">' + linkReportHtml + '</td>');
+		$(tableRow).append('<td>' + dateCreated + '</td>');
+		$(tableRow).append('<td>' + dateUpdated + '</td>');
+		$(tableRow).append('<td><a href="#" class="btn btn-mini" onclick="onDeleteExecutionBtnClick(&quot;' + currentExecution.guid + '&quot;);return false;"><i class="icon-trash"></i></a></td>');
+
+		return tableRow;
+    };
+
+    var displayExecutions = function() {
+
+		var testSuiteExecutions = testSuite.executions;
+
+        var count = 0;
+        var tableElement = $('<table><thead><th>Execution name</th><th></th><th></th><th>Created</th><th>Last modified</th><th></th></thead></table>');
+		var tableBodyElement = $('<tbody></tbody>');
+		for (var i=0; i<testSuiteExecutions.length; i++) {
+            count++;
+            if (!isCompletedExecution(testSuiteExecutions[i])) {
+            	tableBodyElement.append(tableRowForExecution(testSuiteExecutions[i]));
+            }
+		};
+
+		if (count > 0) {
+		    $(tableElement).append(tableBodyElement);
+			$('#ongoingExecutions').html(tableElement);
+        }
+
+
+        count = 0;
+		tableElement = $('<table><thead><th>Execution name</th><th></th><th></th><th>Created</th><th>Last modified</th><th></th></thead></table>');
+		tableBodyElement = $('<tbody></tbody>');
+
+        for (var i=0; i<testSuiteExecutions.length; i++) {
+			count++;
+			if (isCompletedExecution(testSuiteExecutions[i])) {
+				tableBodyElement.append(tableRowForExecution(testSuiteExecutions[i]));
+			}
+		};
+
+		if (count > 0) {
+			$(tableElement).append(tableBodyElement);
+			$('#completedExecutions').html(tableElement);
+        }
+    };
+
+	$( document ).ready(function() {
+	    LYNTEST.DAO.load();
+
+        testSuite = _.findWhere(LYNTEST.DAO.suites, {guid: testSuiteGuid});
+	    $('#testSuiteName').html('Test suite: ' + testSuite.name);
+		displayExecutions();
+	});
+</script>
+</body>
+</html>

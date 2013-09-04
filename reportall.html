@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<head>
+<meta charset=utf-8>
+<title>LYNTEST - Test report</title>
+<link rel="stylesheet" href="css/bootstrap.min.css">
+<link rel="stylesheet" href="css/lyntest_execution.css">
+<link rel="stylesheet" href="css/lyntest_report.css">
+<script src="js/jquery-1.10.2.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/underscore-min.js"></script>
+<script src="js/lyntest_utils.js"></script>
+<script src="js/lyntest_dao.js"></script>
+<script src="js/lyntest_execution.js"></script>
+</head>
+<body>
+<section id="wrapper">
+<div id="container">
+  <div class="panel">
+    <!-- Default panel contents -->
+    <div id="reportInfo">
+    	<h2>Test report - all executions in test suite</h2>
+    	<span>Report for test suite: <span id="testSuiteName">[Name of suite]</span>
+    </div>
+    <div><span>html source: <textarea id="htmlSource"></textarea></span></div>
+    <div id="reportDetails">
+
+    </div>
+  </div>
+</div>
+<script defer>
+
+    var testSuiteGuid = getParameterByName(LYNTEST.QUERYPARAMS.testSuiteId);
+    var completedParamValue = getParameterByName('completed');
+
+    var makeCellForIndividualTest = function(currentTest) {
+        var cellHtml = '<td></td>';
+    	switch (currentTest.status) {
+			case "OK": cellHtml = '<td class="ok">ok</td>'; break;
+			case "FAIL": cellHtml = '<td class="fail">FAIL</td>'; break;
+			case "COULDNOTTEST": cellHtml = '<td class="could-not-test">???</td>';
+		}
+		return cellHtml;
+    };
+
+    var shallSkipExecution = function(execution) {
+        if (completedParamValue === undefined || completedParamValue === null) {
+           return false;
+        } else {
+           var completedBooleanVal = completedParamValue === "true";
+           return completedBooleanVal !== isCompletedExecution(execution);
+        }
+    };
+
+	var generateReport = function() {
+		var currentTestSuite = _.findWhere(LYNTEST.DAO.suites, {guid: testSuiteGuid});
+		$('#testSuiteName').html('Test suite: ' + currentTestSuite.name);
+
+		var tableHeadElement = $('<thead></thead>');
+		$(tableHeadElement).append('<th></th>');
+		for (var i = 0; i < currentTestSuite.executions.length; i++) {
+
+		   if (shallSkipExecution(currentTestSuite.executions[i]) ) { continue };
+
+		   var headCellElement = $('<th><div class="rotate">' + clipText(currentTestSuite.executions[i].name, 20) + '</div></th>');
+		   $(tableHeadElement).append(headCellElement);
+		}
+
+		var tableBodyElement = $('<tbody></tbody>');
+		for (var i = 0; i < currentTestSuite.tests.length; i++) {
+			var currentTest = currentTestSuite.tests[i];
+			var rowElement = $('<tr></tr>');
+			var firstCellElement = $('<td>' + currentTest.id + '</td>');
+			$(rowElement).append(firstCellElement);
+
+			for (var j = 0; j < currentTestSuite.executions.length; j++) {
+
+				var currentExecution = currentTestSuite.executions[j];
+
+				 if (shallSkipExecution(currentExecution) ) { continue };
+
+				var cellElement = $(makeCellForIndividualTest(currentExecution.tests[i]));
+				$(rowElement).append(cellElement);
+			}
+
+			$(tableBodyElement).append(rowElement);
+		}
+
+		var tableElement = $('<table></table>');
+		$(tableElement).append(tableHeadElement);
+		$(tableElement).append(tableBodyElement);
+		$('#reportDetails').append(tableElement);
+
+		$('.rotate').css('height', $('.rotate').width() + 13);
+		$('.rotate').css('width', '2em');
+	};
+
+	var showReportHtmlSource = function() {
+	    var htmlSource = $('#reportDetails')[0].innerHTML;
+	    if (!htmlSource) return;
+
+	    if (String.prototype.trim) {
+		   htmlSource = htmlSource.trim();
+		}
+
+		// replace classes so that this works in confluence
+		htmlSource = htmlSource.replace('class="ok"', 'class="highlight-green"');
+		htmlSource = htmlSource.replace('class="could-not-test"', 'class="highlight-yellow"');
+		htmlSource = htmlSource.replace('class="fail"', 'class="highlight-red"');
+
+		htmlSource = htmlSource.replace('class="rotate"', 'class="confluenceTh"');
+
+	    $('#htmlSource').val(htmlSource);
+	};
+
+	$( document ).ready(function() {
+	    LYNTEST.DAO.load();
+	    LYNTEST.EXECUTION.load( null );
+
+		generateReport();
+		showReportHtmlSource();
+	});
+</script>
+<script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+body {
+   padding-top: 10px;
+   padding-left: 20px;
+}
+
+table {
+   border: 1px #AAAAAA solid;
+   padding: 3px;
+   width: 50%;
+}
+
+td, th {
+   padding: 5px 10px;
+}
+
+td.boldtext { font-weight: bold }
+tr:nth-child(odd)    { background-color: #D0D0D0; }
+tr:nth-child(even)   { background-color: #DDD; }

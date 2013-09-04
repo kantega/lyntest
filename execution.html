@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<head>
+<meta charset=utf-8>
+<title>LYNTEST - Test suite</title>
+<link rel="stylesheet" href="css/bootstrap.min.css">
+<link rel="stylesheet" href="css/lyntest_execution.css">
+<script src="js/jquery-1.10.2.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/underscore-min.js"></script>
+<script src="js/lyntest_utils.js"></script>
+<script src="js/lyntest_dao.js"></script>
+<script src="js/lyntest_execution.js"></script>
+</head>
+<body>
+<section id="wrapper">
+<div id="container">
+  <div class="panel">
+    <!-- Default panel contents -->
+    <div id="executionInfo" class="panel-heading">
+    	Now testing:
+    	<span id="executionName">[Name of execution instance]</span>
+    	<span id="executionProgress">
+    	    Progress:
+			<div class="progress">
+			  <div class="progress-bar progress-bar-success" style="width: 35%">25</div>
+			  <div class="progress-bar progress-bar-warning" style="width: 20%">18</div>
+			  <div class="progress-bar progress-bar-danger" style="width: 10%">9</div>
+			  <span class="remaining">11</span>
+			</div>
+    	</span>
+    </div>
+    <div id="currentTestInfo" class="well">
+    	<span id="linkToFirst"><a href="#" onclick="LYNTEST.EXECUTION.goToFirst(); return false;"> [&lt;&lt;</a></span>
+		<span id="linkToLast"><a href="#" onclick="LYNTEST.EXECUTION.goToLast(); return false;"> &gt;&gt;]</a></span>
+		<div class="currentTestControls">
+			<span id="linkToPrevious"></span>
+			<span id="linkToNext"></span>
+			<div id="statusButtons" class="btn-group">
+
+				<button class="btn btn-small" onclick="LYNTEST.EXECUTION.setTestStatus(undefined);">Reset status</button>
+				<button class="btn btn-warning btn-small" onclick="LYNTEST.EXECUTION.setTestStatus('COULDNOTTEST');">Could not test</button>
+				<button class="btn btn-danger btn-small" onclick="LYNTEST.EXECUTION.setTestStatus('FAIL');"><i class="icon-white icon-thumbs-down"></i>Test failed</button>
+				<button class="btn btn-success btn-small" onclick="LYNTEST.EXECUTION.setTestStatus('OK');"><i class="icon-white icon-ok"></i>Tested OK</button>
+
+				<div id="errorDetailsLabel" class="errorDetails"><span></span><button class="btn btn-info btn-small" onclick="enableErrorDetailsInput('');">Edit</button></div>
+				<div id="errorDetailsInput" class="errorDetails"><textarea name="errorDetails" placeholder="Report error details here" cols="40" rows="4"></textarea></div>
+			</div>
+
+		</div>
+		<span id="currentTestName"></span>
+
+    </div>
+  </div>
+  <div id="testDefinitionIframe">
+  </div>
+</div>
+<script defer>
+
+    var errorDescription = null;
+
+	$('#errorDetailsInput textarea').on('change keypress paste focus textInput input', function () {
+        var val = this.value;
+        if (val !== errorDescription) {
+            LYNTEST.EXECUTION.setTestErrorDescription(val);
+            errorDescription = val;
+        }
+    });
+
+    var updateExecutionInfo = function(currentExecution) {
+        $('#executionName').html(currentExecution.name);
+
+        var amountOkFailed = LYNTEST.EXECUTION.getAmountOfOkFailed();
+        $('#executionProgress .progress-bar-success').html( numberOrBlankIfZero(amountOkFailed.ok) );
+        $('#executionProgress .progress-bar-success').attr('style', getProgressBarSectionStyle(amountOkFailed.ok, amountOkFailed.total));
+        $('#executionProgress .progress-bar-danger').html( numberOrBlankIfZero(amountOkFailed.failed) );
+        $('#executionProgress .progress-bar-danger').attr('style', getProgressBarSectionStyle(amountOkFailed.failed, amountOkFailed.total));
+        $('#executionProgress .progress-bar-warning').html( numberOrBlankIfZero(amountOkFailed.couldNotTest) );
+        $('#executionProgress .progress-bar-warning').attr('style', getProgressBarSectionStyle(amountOkFailed.couldNotTest, amountOkFailed.total));
+        $('#executionProgress .remaining').html( numberOrBlankIfZero(amountOkFailed.remaining) );
+    }
+
+    var enableErrorDetailsInput = function() {
+        $('#errorDetailsLabel').hide();
+    	$('#errorDetailsInput').show();
+    	$('#errorDetailsInput textarea').val(errorDescription);
+	    $('#errorDetailsInput textarea').focus();
+    }
+
+    var showErrorDetailsField = function() {
+		if (LYNTEST.EXECUTION.justChangedCurrentTestStatus) {
+		    enableErrorDetailsInput();
+		} else {
+			$('#errorDetailsLabel').show();
+			$('#errorDetailsLabel span').html(clipText(errorDescription,45));
+		}
+    }
+
+    var updateCurrentTestInfo = function(currentTest) {
+
+        $('#currentTestName').html(currentTest.test.id + ': ' + currentTest.test.name);
+
+		errorDescription = currentTest.comment || "";
+    	$('.errorDetails').hide();
+
+    	var classname = "well";
+		switch (currentTest.status) {
+			case "OK":
+				classname += " testedOk";
+				break;
+			case "FAIL":
+				classname += " testFailed";
+				showErrorDetailsField();
+				break;
+			case "COULDNOTTEST":
+				classname += " couldNotTest";
+				showErrorDetailsField();
+				break;
+		}
+
+    	$('#currentTestInfo').attr("class", classname);
+    };
+
+    var updatePaginationLinks = function(currentExecution) {
+
+	    var showIfNotInFirst = currentExecution.currentTestIndex === 0 ? 'hidden' : 'visible';
+		$('#linkToFirst').css('visibility', showIfNotInFirst);
+
+		var showIfNotInLast = currentExecution.currentTestIndex + 1 === currentExecution.tests.length ? 'hidden' : 'visible';
+		$('#linkToLast').css('visibility', showIfNotInLast);
+
+		$('#linkToPrevious').html(LYNTEST.EXECUTION.getLinkToPreviousTest());
+		$('#linkToNext').html(LYNTEST.EXECUTION.getLinkToNextTest());
+    };
+
+	var refreshContent = function() {
+		var currentExecution = LYNTEST.EXECUTION.getTestExecution();
+		var currentTest = LYNTEST.EXECUTION.getCurrentTest();
+
+		updateExecutionInfo(currentExecution);
+		updateCurrentTestInfo(currentTest);
+		updatePaginationLinks(currentExecution);
+
+		if (!LYNTEST.EXECUTION.justChangedCurrentTestStatus) {
+			var iframeHeight = $(window).height() * 2;
+			var iframeHtml = '<iframe src="' + currentTest.test.url + '" frameborder="0" style="overflow:hidden;height:' + iframeHeight + 'px;width:100%" height="100%" width="100%"></iframe>';
+			$('#testDefinitionIframe').html(iframeHtml);
+		}
+	};
+
+	$( document ).ready(function() {
+	    LYNTEST.DAO.load();
+	    LYNTEST.EXECUTION.load( refreshContent );
+
+		refreshContent();
+	    //alert('Test execution: ' + LYNTEST.DAO.suites[testSuiteIndex].executions[testExecutionIndex].name);
+	});
+</script>
+<script>
+</body>
+</html>

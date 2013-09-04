@@ -1,0 +1,4 @@
+TEST-50: Some other test;http://www.kantega.no
+TEST-60: Some other timeout test;http://www.yr.no
+TEST-70: Not authorized test;http://www.ap.no
+TEST-110: Duplication tests;http://www.yr.no

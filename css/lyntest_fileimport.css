@@ -1,0 +1,20 @@
+body {
+   padding-top: 10px;
+   padding-left: 20px;
+}
+#fileDropArea { border: 10px dashed #ccc; width: 50%; height: 300px; margin: 20px 20px; padding: 30px 10px; color: grey;}
+#fileDropArea.hover { border: 10px dashed #333; }
+
+table {
+   border: 1px #AAAAAA solid;
+   padding: 3px;
+   width: 50%;
+}
+
+td, th {
+   padding: 5px 10px;
+}
+
+td.boldtext { font-weight: bold }
+tr:nth-child(odd)    { background-color: #D0D0D0; }
+tr:nth-child(even)   { background-color: #DDD; }

@@ -1,0 +1,83 @@
+.currentTestControls {
+  display: inline-block;
+  margin-left: 50px;
+  vertical-align: top;
+}
+#linkToPrevious, #linkToNext, #linkToFirst, #linkToLast { display: inline-block; }
+#linkToPrevious, #linkToFirst { float: left; margin-right: 20px; }
+#linkToNext, #linkToLast { float: right; margin-left: 20px; }
+
+#linkToPrevious {  
+  float: left;
+  margin-right: 20px;
+  font-weight: bold;
+}
+#linkToNext {
+  float: right;
+  margin-left: 20px;
+  font-weight: bold;
+}
+#currentTestName {
+  display: inline-block;
+  margin-left: 50px;
+}
+#statusButtons {
+  background-color: transparent;
+  display: inline-block;
+}
+#executionInfo {
+  color: #AAAAAA;
+}
+#executionInfo #executionName {
+  font-weight: bold;
+  color: #505050;
+}
+#executionProgress {
+  display: inline-block;
+  width: 50%;
+  padding-left: 30px;
+  color: #AAAAAA;
+}
+#executionProgress .progress {
+  display: inline-block;
+  width: 50%;
+  vertical-align: top;
+  background-color: #D0D0D0;
+  color: #FFFFFF;
+  font-size: 12px;
+  text-align: right;
+  padding-right: 5px;
+}
+#executionProgress .progress-bar {
+  opacity: 0.65;
+}
+#currentTestInfo #errorDetailsLabel button {
+  float: right;
+  line-height: 0.7em;
+  font-size: 10px;
+}
+#currentTestInfo #errorDetailsInput textarea {
+  width: 100%;  
+}
+.errorDetails * {
+  display: inline-block;
+  margin-top: 10px;
+}
+.errorDetails {  
+  display: none;  
+}
+.testedOk {
+  background-color: #aaffaa;
+}
+.testFailed {
+  background-color: #ff5656;
+}
+.couldNotTest {
+  background-color: #ffcf56;
+}
+.testFailed .errorDetails span {
+  color: #882828;
+}
+.couldNotTest .errorDetails span {
+  color: #886038;
+}

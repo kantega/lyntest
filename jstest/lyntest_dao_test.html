@@ -1,0 +1,232 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Lyntest execution - test</title>
+
+  <link rel="stylesheet" href="qunit-1.12.0.css">
+  <script src="qunit-1.12.0.js"></script>
+  <script src="../js/underscore-min.js"></script>
+  <script src="../js/lyntest_utils.js"></script>
+  <script src="../js/lyntest_dao.js"></script>
+  <script src="../js/lyntest_execution.js"></script>
+
+  <script>
+
+  var DUMMY_TEST_SUITE_LOCALSTORAGE_ID = 'DUMMY_TEST_SUITE_DELETEMEAFTERTEST';
+
+  // Setup
+  LYNTEST.DAO.load();
+  LYNTEST.EXECUTION.load( );
+
+  LYNTEST.DAO.isInTestMode = false;
+
+  // Before tests: use own local storage var, do not overwrite the real one!!
+  LYNTEST.DAO.useDummyForTestPurposes = function() {
+  		LYNTEST.DAO.localstorageId = DUMMY_TEST_SUITE_LOCALSTORAGE_ID;
+  		var stringyfiedSuites = localStorage.getItem(LYNTEST.DAO.localstorageId);
+  		if (stringyfiedSuites) {
+  		   return;
+  		}
+  		LYNTEST.DAO.suites = JSON.parse(stringyfiedSuites) || [];
+  		LYNTEST.DAO.isInTestMode = true;
+  };
+
+  //LYNTEST.DAO.useDummyForTestPurposes();
+
+  var validateTestMode = function() {
+  	  ok(LYNTEST.DAO.isInTestMode, 'Test mode validation');
+  	  return LYNTEST.DAO.isInTestMode;
+  };
+
+  // ==============================================================================================================
+
+  module( "LYNTEST_DAO - TEST SUITES", {
+    setup: function() {
+      LYNTEST.DAO.useDummyForTestPurposes();
+      ok( true, "Lyntest_dao test mode activated." );
+    }, teardown: function() {
+      localStorage.removeItem(DUMMY_TEST_SUITE_LOCALSTORAGE_ID);
+      LYNTEST.DAO.suites = [];
+      ok( true, "Test data removed form local storage." );
+    }
+  });
+
+  test("load module when localstorage empty", function() {
+	 if (!validateTestMode()) return;
+
+     ok(LYNTEST.DAO.suites);
+     equal(LYNTEST.DAO.suites.length, 0);
+  });
+
+  test("add test suite + contains suite with(name) + delete test suite", function() {
+       if (!validateTestMode()) return;
+
+       var newTestSuiteName = "My super regression test suite";
+
+       equal(LYNTEST.DAO.suites.length, 0, 'Length of suites array');
+       ok( !LYNTEST.DAO.containsSuiteWithName(newTestSuiteName), 'Does not contain new suite');
+
+       var newTestSuite = createTestSuite(newTestSuiteName, []);
+       LYNTEST.DAO.addAndStoreTestSuite(newTestSuite);
+
+       equal(LYNTEST.DAO.suites.length, 1, 'Length of suites array');
+       ok( LYNTEST.DAO.containsSuiteWithName(newTestSuiteName), 'Suite has been added');
+
+       LYNTEST.DAO.deleteTestSuite(newTestSuite.guid);
+
+       equal(LYNTEST.DAO.suites.length, 0, 'Length of suites array');
+       ok( !LYNTEST.DAO.containsSuiteWithName(newTestSuiteName), 'Suite has been deleted');
+  });
+
+  test("add twice + delete twice", function() {
+       if (!validateTestMode()) return;
+
+       equal(LYNTEST.DAO.suites.length, 0, 'Array is empty');
+
+       var newSuiteName1 = "Test Suite 1";
+       var newSuiteName2 = "Test Suite 2";
+       var newSuite1 = createTestSuite(newSuiteName1, []);
+       var newSuite2 = createTestSuite(newSuiteName2, []);
+
+       LYNTEST.DAO.addAndStoreTestSuite(newSuite1);
+       LYNTEST.DAO.addAndStoreTestSuite(newSuite2);
+
+       equal(LYNTEST.DAO.suites.length, 2, 'Length of suites array');
+       ok( LYNTEST.DAO.containsSuiteWithName(newSuiteName1), 'Suite 1 has been added');
+       ok( LYNTEST.DAO.containsSuiteWithName(newSuiteName2), 'Suite 2 has been added');
+       ok( LYNTEST.DAO.suites[0].guid = newSuite1.guid, 'Suite 1 is stored in pos 0');
+
+       LYNTEST.DAO.deleteTestSuite(newSuite1.guid);
+
+       equal(LYNTEST.DAO.suites.length, 1, 'Length of suites array');
+	   ok( !LYNTEST.DAO.containsSuiteWithName(newSuiteName1), 'Suite 1 has been removed');
+	   ok( LYNTEST.DAO.containsSuiteWithName(newSuiteName2), 'Suite 2 is still there');
+       ok( LYNTEST.DAO.suites[0].guid = newSuite2.guid, 'Suite 2 is now in pos 0');
+
+       // Try to delete again - not found, nothing done
+       LYNTEST.DAO.deleteTestSuite(newSuite1.guid);
+
+       equal(LYNTEST.DAO.suites.length, 1, 'Length of suites array');
+	   ok( !LYNTEST.DAO.containsSuiteWithName(newSuiteName1), 'Nothing should be changed since last step');
+	   ok( LYNTEST.DAO.containsSuiteWithName(newSuiteName2), 'Nothing should be changed since last step');
+       ok( LYNTEST.DAO.suites[0].guid = newSuite2.guid, 'Nothing should be changed since last step');
+
+       LYNTEST.DAO.deleteTestSuite(newSuite2.guid);
+
+	   equal(LYNTEST.DAO.suites.length, 0, 'Length of suites array');
+	   ok( !LYNTEST.DAO.containsSuiteWithName(newSuiteName1), 'Nothing should be changed since last step');
+	   ok( !LYNTEST.DAO.containsSuiteWithName(newSuiteName2), 'Suite 2 has been removed');
+
+	   // Delete on empty array should be no problem
+	   LYNTEST.DAO.deleteTestSuite(newSuite2.guid);
+       ok ( LYNTEST.DAO.suites);
+  });
+
+    // ==============================================================================================================
+
+    module( "LYNTEST_DAO - TEST SUITE EXECUTIONS", {
+      setup: function() {
+        LYNTEST.DAO.useDummyForTestPurposes();
+        ok( true, "Lyntest_dao test mode activated." );
+      }, teardown: function() {
+        localStorage.removeItem(DUMMY_TEST_SUITE_LOCALSTORAGE_ID);
+        LYNTEST.DAO.suites = [];
+        ok( true, "Test data removed form local storage." );
+      }
+  });
+
+  test("add execution + contains execution with(name) + delete execution", function() {
+         if (!validateTestMode()) return;
+
+         var targetTestSuite = createTestSuite('We will add executions here', []);
+         LYNTEST.DAO.addAndStoreTestSuite( createTestSuite('Some other test suite', []) );
+         LYNTEST.DAO.addAndStoreTestSuite(targetTestSuite);
+         equal(LYNTEST.DAO.suites.length, 2);
+         equal(LYNTEST.DAO.suites[1].name, 'We will add executions here', 'Target suite is in expected position');
+
+         equal(targetTestSuite.executions.length, 0, 'Length of executions');
+
+         var newExecName = "Testing next release candidate";
+         LYNTEST.DAO.createTestSuiteExecution(targetTestSuite.guid, newExecName);
+
+         equal(targetTestSuite.executions.length, 1, 'Length of executions');
+         equal(LYNTEST.DAO.suites[0].executions, length, 0, 'Lenght of executions in other suites');
+
+         var execution = targetTestSuite.executions[0];
+
+         LYNTEST.DAO.deleteTestSuiteExecution(targetTestSuite.guid, execution.guid);
+         equal(targetTestSuite.executions.length, 0, 'Length of executions');
+
+         // second time delete should have no effect
+         LYNTEST.DAO.deleteTestSuiteExecution(targetTestSuite.guid, execution.guid);
+         equal(targetTestSuite.executions.length, 0, 'Length of executions');
+
+         LYNTEST.DAO.deleteTestSuite(targetTestSuite.guid);
+         ok( !LYNTEST.DAO.containsSuiteWithName('We will add executions here'));
+    });
+
+
+  test("add twice + delete twice", function() {
+          if (!validateTestMode()) return;
+
+          var targetTestSuite = createTestSuite('We will add executions here', []);
+          LYNTEST.DAO.addAndStoreTestSuite( createTestSuite('Some other test suite', []) );
+          LYNTEST.DAO.addAndStoreTestSuite(targetTestSuite);
+          equal(LYNTEST.DAO.suites.length, 2);
+          equal(LYNTEST.DAO.suites[1].name, 'We will add executions here', 'Target suite is in expected position');
+
+          equal(targetTestSuite.executions.length, 0, 'Length of executions');
+
+          var newExecName1 = "Test Exec 1";
+          var newExecName2 = "Test Exec 2";
+          LYNTEST.DAO.createTestSuiteExecution(targetTestSuite.guid, newExecName1);
+          LYNTEST.DAO.createTestSuiteExecution(targetTestSuite.guid, newExecName2);
+
+          equal(targetTestSuite.executions.length, 2, 'Length of executions');
+          equal(targetTestSuite.executions[1].name, newExecName2, 'Position of executions');
+
+          var execution1 = targetTestSuite.executions[0];
+          var execution2 = targetTestSuite.executions[1];
+
+          LYNTEST.DAO.deleteTestSuiteExecution(targetTestSuite.guid, execution1.guid);
+          equal(targetTestSuite.executions.length, 1, 'Length of executions');
+          equal(targetTestSuite.executions[0].name, newExecName2, 'Exec 2 shifted to first position after delete');
+
+          LYNTEST.DAO.deleteTestSuiteExecution(targetTestSuite.guid, execution2.guid);
+          equal(targetTestSuite.executions.length, 0, 'Length of executions');
+
+          // second time delete should have no effect
+          LYNTEST.DAO.deleteTestSuiteExecution(targetTestSuite.guid, execution2.guid);
+          equal(targetTestSuite.executions.length, 0, 'Length of executions');
+
+          LYNTEST.DAO.deleteTestSuite(targetTestSuite.guid);
+          ok( !LYNTEST.DAO.containsSuiteWithName('We will add executions here'));
+  });
+
+
+  // =======================================================================
+  // DIVERSE TEST UTIL FUNCTIONS
+  // =======================================================================
+
+  window.alert = function(str) {  /* do nothing, test in silent mode */ };
+
+  var createTestSuite = function(suiteName, listOfTests) {
+  		var result = {};
+  		result.guid = 'TS-' + generateQuickGuid();
+  		result.name = suiteName;
+  		result.tests = listOfTests;
+  		result.executions = [];
+  		result.created = new Date();
+  		return result;
+	};
+
+  // After tests
+  </script>
+</head>
+<body>
+
+<div id="qunit"></div>
+
+</body>
+</html>

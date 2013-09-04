@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<head>
+<meta charset=utf-8>
+<title>LYNTEST - Test report</title>
+<link rel="stylesheet" href="css/bootstrap.min.css">
+<link rel="stylesheet" href="css/lyntest_execution.css">
+<link rel="stylesheet" href="css/lyntest_report.css">
+<script src="js/jquery-1.10.2.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/underscore-min.js"></script>
+<script src="js/lyntest_utils.js"></script>
+<script src="js/lyntest_dao.js"></script>
+<script src="js/lyntest_execution.js"></script>
+</head>
+<body>
+<section id="wrapper">
+<div id="container">
+  <div class="panel">
+    <!-- Default panel contents -->
+    <div id="executionInfo">
+    	<h2>Test report</h2>
+    	<span id="executionName">[Name of execution instance]</span>
+    	<span id="executionProgress">
+    	    Summary:
+			<div class="progress">
+			  <div class="progress-bar progress-bar-success" style="width: 35%">25</div>
+			  <div class="progress-bar progress-bar-warning" style="width: 20%">18</div>
+			  <div class="progress-bar progress-bar-danger" style="width: 10%">9</div>
+			  <span class="remaining">11</span>
+			</div>
+    	</span>
+    </div>
+    <div><span>html source: <textarea id="htmlSource"></textarea></span></div>
+    <div id="reportDetails">
+
+    </div>
+  </div>
+</div>
+<script defer>
+
+    var updateExecutionInfo = function(currentExecution) {
+        $('#executionName').html(currentExecution.name);
+
+        var amountOkFailed = LYNTEST.EXECUTION.getAmountOfOkFailed();
+        $('#executionProgress .progress-bar-success').html( numberOrBlankIfZero(amountOkFailed.ok) );
+        $('#executionProgress .progress-bar-success').attr('style', getProgressBarSectionStyle(amountOkFailed.ok, amountOkFailed.total));
+        $('#executionProgress .progress-bar-danger').html( numberOrBlankIfZero(amountOkFailed.failed) );
+        $('#executionProgress .progress-bar-danger').attr('style', getProgressBarSectionStyle(amountOkFailed.failed, amountOkFailed.total));
+        $('#executionProgress .progress-bar-warning').html( numberOrBlankIfZero(amountOkFailed.couldNotTest) );
+        $('#executionProgress .progress-bar-warning').attr('style', getProgressBarSectionStyle(amountOkFailed.couldNotTest, amountOkFailed.total));
+        $('#executionProgress .remaining').html( numberOrBlankIfZero(amountOkFailed.remaining) );
+    }
+
+    var tableRowForTest = function(currentTest) {
+        var tableRow = $('<tr></tr>');
+		switch (currentTest.status) {
+			case "OK": $(tableRow).addClass('ok'); break;
+			case "FAIL": $(tableRow).addClass('fail'); break;
+			case "COULDNOTTEST": $(tableRow).addClass('could-not-test');
+		}
+		var statusStr = currentTest.status === 'FAIL' ? "Failed: " : currentTest.status === 'COULDNOTTEST' ? "Could not test: " : "";
+		var commentStr = isEmptyString(currentTest.comment) ? "" : clipText(currentTest.comment, 55);
+
+		 var linkToTestDetails = '<a href="' + currentTest.test.url + '" target="_blank">' + clipText(currentTest.test.name, 50) + '</a>';
+
+        $(tableRow).append('<td class="boldtext">' + currentTest.test.id + '</td>');
+        $(tableRow).append('<td>' + linkToTestDetails + '</td>');
+        $(tableRow).append('<td class="boldtext">' + statusStr + commentStr + '</td>');
+
+        // Til confluence
+        switch (currentTest.status) {
+			case "OK": $(tableRow).find('td').addClass('highlight-green'); break;
+			case "FAIL": $(tableRow).find('td').addClass('highlight-red'); break;
+			case "COULDNOTTEST": $(tableRow).find('td').addClass('highlight-yellow');
+		}
+
+        return tableRow;
+    }
+
+	var generateReport = function() {
+		var currentExecution = LYNTEST.EXECUTION.getTestExecution();
+
+		updateExecutionInfo(currentExecution);
+
+		var tableElement = $('<table></table>');
+		var tableBodyElement = $('<tbody></tbody>');
+		for (var i = 0; i < currentExecution.tests.length; i++) {
+		    $(tableBodyElement).append(tableRowForTest(currentExecution.tests[i]));
+		}
+
+		$(tableElement).append(tableBodyElement);
+		$('#reportDetails').append(tableElement);
+	};
+	var showReportHtmlSource = function() {
+	    var htmlSource = $('#reportDetails')[0].innerHTML;
+	    if (!htmlSource) return;
+
+	    if (String.prototype.trim) {
+		   htmlSource = htmlSource.trim();
+		}
+
+	    $('#htmlSource').val(htmlSource);
+	};
+
+	$( document ).ready(function() {
+	    LYNTEST.DAO.load();
+	    LYNTEST.EXECUTION.load( null );
+
+		generateReport();
+		showReportHtmlSource();
+	});
+</script>
+<script>
+</body>
+</html>

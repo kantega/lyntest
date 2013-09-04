@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<head>
+<meta charset=utf-8>
+<title>LYNTEST - import suite from file</title>
+<link rel="stylesheet" href="css/bootstrap.min.css">
+<link rel="stylesheet" href="css/lyntest_fileimport.css">
+<script src="js/jquery-1.10.2.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/underscore-min.js"></script>
+<script src="js/lyntest_utils.js" defer></script>
+<script src="js/lyntest_dao.js" defer></script>
+<script src="js/lyntest_fileimport.js" defer></script>
+</head>
+<body>
+<section id="wrapper">
+<div id="container">
+    <header>
+      <h1>Import test suite</h1>
+    </header>
+	<article>
+	  <div id="fileDropArea">
+  	     <p class="instructions">Drag and drop a test suite file here.</p>
+	     <p class="instructions">Test suite file format</p>
+	     <form id="import-form" class="navbar-form pull-left" style="width: 100%; display: none;">
+	         <p>
+	         	<span>Import file was validated OK</span><br>
+	         	<span id="import-report-message"></span>
+	         </p>
+	         <input id="name-field" type="text" class="form-control"  placeholder="Enter a name for your new test suite" style="width: 80%">
+  			 <button type="button" class="btn btn-info" onclick="onSaveButtonClick();return false;">Save test suite</button>
+	     </form>
+	  </div>
+	</article>
+
+	<article>
+	   <h1>Existing test suites</h1>
+	   <div id="existingSuites">
+	   </div>
+	</article>
+</div>
+<script defer>
+
+    var tableRowForSuite = function(currentSuite) {
+        var tableRow = $('<tr></tr>');
+
+		var linkHtml = '<a href="testsuite.html?' + LYNTEST.QUERYPARAMS.testSuiteId + '=' + currentSuite.guid + '" target="_blank">' + currentSuite.name + '</a>';
+		var dateCreated = currentSuite.created ? currentSuite.created.toLocaleString() : "";
+
+        $(tableRow).append('<td class="boldtext">' + linkHtml + '</td>');
+        $(tableRow).append('<td>' + dateCreated + '</td>');
+        $(tableRow).append('<td>' + currentSuite.executions.length + '</td>');
+
+        return tableRow;
+    };
+
+
+    var displaySuites = function(suiteList) {
+
+        var existingSuitesDiv = document.getElementById('existingSuites');
+
+        if (suiteList == null || suiteList.length == 0) {
+           $('#existingSuites').html('No test suites found here.');
+           return;
+        };
+
+        var tableElement = $('<table><thead><th>Test suite</th><th>Creation date</th><th>Executions</th></thead></table>');
+		var tableBodyElement = $('<tbody></tbody>');
+        for (var i=0; i<suiteList.length; i++) {
+            tableBodyElement.append(tableRowForSuite(suiteList[i]));
+        };
+        $(tableElement).append(tableBodyElement);
+        $('#existingSuites').html(tableElement);
+    };
+
+    var onSaveButtonClick = function() {
+    	LYNTEST.FILIMPORT.saveImportedFile($('#name-field').val());
+    	return false;
+    };
+
+    var onFileImportValidatedOk = function(newTestSuite) {
+        var foundTestsMessage = newTestSuite.tests.length + ' tests were found in the imported suite. <br>';
+        var saveReminderMessage = '<b>Do you want to save this test suite?</b>';
+        $('#import-report-message').html(foundTestsMessage + saveReminderMessage);
+        $('.instructions').hide();
+        $('#import-form').show();
+    };
+
+    var onFileImportSavedOk = function() {
+	    alert("OK!");
+	    $('.instructions').show();
+        $('#import-form').hide();
+	    displaySuites(LYNTEST.DAO.suites);
+    };
+
+	$( document ).ready(function() {
+	    LYNTEST.DAO.load();
+		LYNTEST.FILIMPORT.load( onFileImportValidatedOk, onFileImportSavedOk );
+
+		displaySuites(LYNTEST.DAO.suites);
+	});
+</script>
+<script>
+</body>
+</html>
