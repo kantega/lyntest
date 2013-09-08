@@ -71,12 +71,16 @@ LYNTEST.FILIMPORT.load = function( onFileImportValidatedOkFunction, onFileImport
 		var htmlContainer = $('<div>' + allText + '</div>');
 		var allLinks = $(htmlContainer).find('a');
 		var testList = [];
+		var processedIDs = [];
 		for (var i=0; i < allLinks.length; i++) {
 			var linkText = allLinks[i].innerText;
 			if (linkText.indexOf(':') > -1) {
 				var linkUrl = allLinks[i].href;
 				var idAndName = linkText.split(':');
-				testList.push(createTest(idAndName[0], idAndName[1], linkUrl));
+				if (!_.contains(processedIDs, idAndName[0])) {
+					testList.push(createTest(idAndName[0], idAndName[1], linkUrl));
+					processedIDs.push(idAndName[0]);
+				}
 			}
 		}
 	    return testList;
