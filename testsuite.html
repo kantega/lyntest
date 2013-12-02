@@ -72,7 +72,6 @@
 <script defer>
 
 	var testSuiteGuid = getParameterByName(LYNTEST.QUERYPARAMS.testSuiteId);
-	var testSuite;
 
 	var onReportAllExecsClick = function() {
 	    var queryParams = LYNTEST.QUERYPARAMS.testSuiteId + '=' + testSuiteGuid;
@@ -95,6 +94,7 @@
     };
 
     var onDeleteExecutionBtnClick = function(executionGuid) {
+    	var testSuite = _.findWhere(LYNTEST.DAO.suites, {guid: testSuiteGuid});
         var executionToDelete = _.findWhere(testSuite.executions, {guid: executionGuid});
         var confirmMsg = '<p>Confirm delete execution: <b>' + executionToDelete.name + '</b>?</p><p><b>NB!</b> This cannot be undone!</p>';
         $('#modal-from-dom .modal-body').html(confirmMsg);
@@ -130,7 +130,9 @@
 
     var displayExecutions = function() {
 
+		var testSuite = _.findWhere(LYNTEST.DAO.suites, {guid: testSuiteGuid});
 		var testSuiteExecutions = testSuite.executions;
+		$('#testSuiteName').html('Test suite: ' + testSuite.name);
 
         var count = 0;
         var tableElement = $('<table><thead><th>Execution name</th><th></th><th></th><th>Created</th><th>Last modified</th><th></th></thead></table>');
@@ -167,9 +169,6 @@
 
 	$( document ).ready(function() {
 	    LYNTEST.DAO.load();
-
-        testSuite = _.findWhere(LYNTEST.DAO.suites, {guid: testSuiteGuid});
-	    $('#testSuiteName').html('Test suite: ' + testSuite.name);
 		displayExecutions();
 	});
 </script>

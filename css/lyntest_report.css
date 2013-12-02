@@ -31,11 +31,14 @@ td.boldtext { font-weight: bold }
 tr.fail:nth-child(odd)    { background-color: #f99; }
 tr.fail:nth-child(even)    { background-color: #fbb; }
 
+tr.could-not-test:nth-child(odd)       { background-color: #ff9; }
+tr.could-not-test:nth-child(even)      { background-color: #ffb; }
+
 tr.ok:nth-child(odd)       { background-color: #9f9; }
 tr.ok:nth-child(even)      { background-color: #bfb; }
 
-tr.could-not-test:nth-child(odd) { background-color: #ff9; }
-tr.could-not-test:nth-child(even)   { background-color: #ffb; }
+tr:nth-child(odd) > td.could-not-test:nth-child(odd), tr:nth-child(even) > td.could-not-test:nth-child(even) { background-color: #ff9; }
+tr:nth-child(even) > td.could-not-test:nth-child(odd), tr:nth-child(odd) > td.could-not-test:nth-child(even)  { background-color: #ffb; }
 
 tr:nth-child(odd) , th:nth-child(odd) { background-color: #D0D0D0; }
 tr:nth-child(even), th:nth-child(even){ background-color: #DDD; }

@@ -39,6 +39,10 @@ LYNTEST.DAO.load = function() {
 	};
 
 	LYNTEST.DAO.createTestSuiteExecution = function(testSuiteGuid, newTestExecutionName) {
+
+		// dette for aa sikre at endringer i andre faner blir med
+		retrieveExistingSuites();
+
 		if (isEmptyString(newTestExecutionName)) {
 			alert('Name cannot be empty');
 			return;
@@ -74,6 +78,10 @@ LYNTEST.DAO.load = function() {
 	};
 
 	LYNTEST.DAO.deleteTestSuiteExecution = function(testSuiteGuid, testExecutionGuid) {
+
+		// dette for aa sikre at endringer siden siste hentes fra siste lagrede versjon
+		retrieveExistingSuites();
+
 		var testSuite = _.findWhere(LYNTEST.DAO.suites, {guid: testSuiteGuid});
 		if (!testSuite || !testSuite.executions) { alert('Could not delete'); return false; };
 
