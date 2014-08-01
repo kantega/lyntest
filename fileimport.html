@@ -50,6 +50,9 @@
         $(tableRow).append('<td>' + dateCreated + '</td>');
         $(tableRow).append('<td>' + currentSuite.executions.length + '</td>');
 
+        var linkToSubset = '<a href="createsubset.html?' + LYNTEST.QUERYPARAMS.testSuiteId + '=' + currentSuite.guid + '" target="_blank">Subset...</a>';
+        $(tableRow).append('<td class="boldtext">' + linkToSubset + '</td>');
+
         return tableRow;
     };
 
@@ -63,7 +66,7 @@
            return;
         };
 
-        var tableElement = $('<table><thead><th>Test suite</th><th>Creation date</th><th>Executions</th></thead></table>');
+        var tableElement = $('<table><thead><th>Test suite</th><th>Creation date</th><th>Executions</th><th></th></thead></table>');
 		var tableBodyElement = $('<tbody></tbody>');
         for (var i=0; i<suiteList.length; i++) {
             tableBodyElement.append(tableRowForSuite(suiteList[i]));

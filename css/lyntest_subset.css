@@ -1,0 +1,24 @@
+table {
+   margin-top: 30px;
+}
+
+#reportInfo {
+  color: #AAAAAA;
+}
+#reportInfo #testSuiteName {
+  font-weight: bold;
+  color: #505050;
+}
+
+td, th {
+   padding: 5px 7px;
+}
+
+tr:not(.enabled) * { opacity:0.5;  };
+
+td.boldtext { font-weight: bold }
+
+tr.enabled:nth-child(odd)       { background-color: #9f9; }
+tr.enabled:nth-child(even)      { background-color: #bfb; }
+tr:nth-child(odd) > td.enabled:nth-child(odd), tr:nth-child(even) > td.enabled:nth-child(even) { background-color: #9f9; }
+tr:nth-child(even) > td.enabled:nth-child(odd), tr:nth-child(odd) > td.enabled:nth-child(even) { background-color: #bfb; }
