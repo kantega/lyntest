@@ -40,6 +40,19 @@
 </div>
 <script defer>
 
+	var downloadTestSuite = function(e, testSuiteId) {
+
+		//e.preventDefault();
+
+	    var filename = 'testSuiteData.txt';
+	    var filecontent = LYNTEST.FILIMPORT.contentForExportFile(testSuiteId);
+		var pom = document.createElement('a');
+		pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + filecontent);
+		pom.setAttribute('download', filename);
+		pom.click();
+		return false;
+	}
+
     var tableRowForSuite = function(currentSuite) {
         var tableRow = $('<tr></tr>');
 
@@ -52,6 +65,9 @@
 
         var linkToSubset = '<a href="createsubset.html?' + LYNTEST.QUERYPARAMS.testSuiteId + '=' + currentSuite.guid + '" target="_blank">Subset...</a>';
         $(tableRow).append('<td class="boldtext">' + linkToSubset + '</td>');
+
+        var linkToExportFile= '<a onclick="downloadTestSuite(event, \''+currentSuite.guid + '\'); return false;">Download...</a>';
+        $(tableRow).append('<td class="boldtext">' + linkToExportFile + '</td>');
 
         return tableRow;
     };
@@ -66,7 +82,7 @@
            return;
         };
 
-        var tableElement = $('<table><thead><th>Test suite</th><th>Creation date</th><th>Executions</th><th></th></thead></table>');
+        var tableElement = $('<table><thead><th>Test suite</th><th>Creation date</th><th>Executions</th><th></th><th></th></thead></table>');
 		var tableBodyElement = $('<tbody></tbody>');
         for (var i=0; i<suiteList.length; i++) {
             tableBodyElement.append(tableRowForSuite(suiteList[i]));

@@ -9,6 +9,24 @@ LYNTEST.FILIMPORT.load = function( onFileImportValidatedOkFunction, onFileImport
 
 	var justImportedFromFile = null;
 
+	LYNTEST.FILIMPORT.contentForExportFile = function(testSuiteId) {
+
+		var testSuite = _.findWhere(LYNTEST.DAO.suites, {guid: testSuiteId});
+		if (testSuite == null) {
+			alert('Could not find test suite with given ID');
+			return;
+		}
+
+		var result = '';
+		for (var i = 0; i < testSuite.tests.length; i++) {
+			var oneTest = testSuite.tests[i];
+			var testName = oneTest.name.replace(/ +(?= )/g,'');  // remove multiple spaces
+			result = result + oneTest.id + ': ' + oneTest.name + ';' + oneTest.url + '%0A';
+		}
+
+		return result;
+	};
+
 	LYNTEST.FILIMPORT.saveImportedFile = function(newTestSuiteName) {
 		if (isEmptyString(newTestSuiteName)) {
 			alert('Enter a name for the test suite!');
